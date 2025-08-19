@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SearchBar from './components/SearchBar';
 import StockDisplay from './components/StockDisplay';
+import NLPQuery from './components/NLPQuery';
 import './App.css';
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
         </div>
         
         <div className="max-w-4xl mx-auto">
+          <NLPQuery onStockSelect={handleStockSelect} />
           <SearchBar onStockSelect={handleStockSelect} />
           
           {loading && (
