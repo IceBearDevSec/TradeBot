@@ -3,8 +3,14 @@ from flask_cors import CORS
 import yfinance as yf
 import logging
 import time
+import os
 from functools import wraps
+from dotenv import load_dotenv
 from alpha_vantage_service import AlphaVantageService
+from claude_service import ClaudeService
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -12,8 +18,9 @@ CORS(app)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Alpha Vantage service
+# Initialize services
 av_service = AlphaVantageService()
+claude_service = ClaudeService()
 
 def retry_on_rate_limit(retries=3, delay=1):
     def decorator(func):
@@ -247,6 +254,29 @@ def get_test_stock_data(symbol):
         }
     }
     return jsonify(mock_data)
+
+@app.route('/api/nlp-query', methods=['POST'])
+def process_natural_language_query():
+    """Process natural language queries about stocks and trading"""
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        query = data['query'].strip()
+        if not query:
+            return jsonify({'error': 'Query cannot be empty'}), 400
+        
+        logger.info(f"Processing NLP query: {query}")
+        
+        # Process the query using Claude
+        result = claude_service.process_natural_language_query(query)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error processing NLP query: {str(e)}")
+        return jsonify({'error': f'Failed to process query: {str(e)}'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
